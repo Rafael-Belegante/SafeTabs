@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>SafeTabs</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <div class="brand-row">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4.5 6.5h5.2l1.4 1.7h8.4a1.8 1.8 0 0 1 1.8 1.8v8.2a1.8 1.8 0 0 1-1.8 1.8h-15a1.8 1.8 0 0 1-1.8-1.8V8.3a1.8 1.8 0 0 1 1.8-1.8Z"/><path d="M8 13h8M8 16h5"/></svg>
+        </div>
+        <div class="brand-copy">
+          <h1>SafeTabs</h1>
+          <p>Suas abas salvas, organizadas e portáteis.</p>
+        </div>
+        <span class="brand-accent" aria-hidden="true"></span>
+        <div class="hero-actions">
+          <button id="aboutBtn" class="hero-action-btn" type="button" title="Sobre o SafeTabs" aria-label="Sobre o SafeTabs">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg>
+            <span>Sobre</span>
+          </button>
+          <button id="themeBtn" class="icon-btn hero-icon" type="button" title="Alternar tema" aria-label="Alternar tema">
+            <svg id="themeIcon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <section class="save-panel">
+        <label class="session-name-wrap">
+          <span>Nome da sessão</span>
+          <input id="sessionName" type="text" maxlength="80" placeholder="Ex.: Trabalho — Segunda-feira" autocomplete="off" />
+        </label>
+        <button id="saveBtn" class="save-btn" type="button">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Salvar abas desta janela
+        </button>
+        <div id="saveHint" class="save-hint">Drive, ChatGPT, Grok e Gemini são ignorados automaticamente.</div>
+      </section>
+    </header>
+
+    <section class="content">
+      <div class="stats-row">
+        <div class="stat"><strong id="sessionCount">0</strong><span>sessões</span></div>
+        <div class="stat"><strong id="tabCount">0</strong><span>abas salvas</span></div>
+        <div class="stat accent-stat"><strong id="selectedCount">0</strong><span>selecionadas</span></div>
+      </div>
+
+      <div class="toolbar">
+        <label class="search-box">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+          <input id="searchInput" type="search" placeholder="Buscar sessão, site ou aba…" />
+        </label>
+        <button id="selectAllBtn" class="secondary-btn compact" type="button">Selecionar tudo</button>
+      </div>
+
+      <div id="emptyState" class="empty-state hidden">
+        <div class="empty-illustration">
+          <svg viewBox="0 0 64 64"><path d="M11 17h16l4 5h22v29H11z"/><path d="M20 32h24M20 40h17"/></svg>
+        </div>
+        <h2>Nenhuma sessão salva</h2>
+        <p>Salve as abas da janela atual para começar.</p>
+      </div>
+
+      <div id="noResults" class="empty-state small hidden">
+        <h2>Nada encontrado</h2>
+        <p>Tente outro termo de busca.</p>
+      </div>
+
+      <div id="sessionsList" class="sessions-list" aria-live="polite"></div>
+    </section>
+
+    <footer class="bottom-bar">
+      <button id="importBtn" class="secondary-btn" type="button">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 19h14"/></svg>
+        Importar
+      </button>
+      <button id="deleteSelectedBtn" class="secondary-btn danger-soft" type="button" disabled>
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M8 10v8M12 10v8M16 10v8M6 7l1 14h10l1-14"/></svg>
+        Excluir
+      </button>
+      <button id="exportBtn" class="primary-btn grow" type="button" disabled>
+        <svg viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 19h14"/></svg>
+        Exportar selecionadas
+      </button>
+      <input id="fileInput" type="file" accept="application/json,.json" hidden />
+    </footer>
+  </main>
+
+  <div id="importModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="importTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h2 id="importTitle">Importar sessões</h2>
+          <p id="importSubtitle">Escolha o que deseja trazer para este computador.</p>
+        </div>
+        <button id="closeImportBtn" class="icon-btn" type="button" aria-label="Fechar">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="import-actions">
+        <button id="importSelectAll" class="text-btn" type="button">Selecionar tudo</button>
+        <button id="importSelectNone" class="text-btn" type="button">Limpar seleção</button>
+      </div>
+      <div id="importPreview" class="import-preview"></div>
+      <div class="modal-foot">
+        <span id="importSelectionCount">0 selecionadas</span>
+        <button id="confirmImportBtn" class="primary-btn" type="button">Importar selecionadas</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal-card confirm-card">
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg>
+      </div>
+      <h2 id="confirmTitle">Confirmar exclusão</h2>
+      <p id="confirmText">Esta ação não pode ser desfeita.</p>
+      <div class="confirm-actions">
+        <button id="cancelConfirmBtn" class="secondary-btn" type="button">Cancelar</button>
+        <button id="confirmDeleteBtn" class="danger-btn" type="button">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="renameModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
+    <div class="modal-card rename-card">
+      <div class="modal-head">
+        <div>
+          <h2 id="renameTitle">Renomear sessão</h2>
+          <p>Use um nome que ajude a identificar rapidamente este grupo de abas.</p>
+        </div>
+        <button id="closeRenameBtn" class="icon-btn" type="button" aria-label="Fechar">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="rename-body">
+        <label for="renameInput">Nome da sessão</label>
+        <input id="renameInput" type="text" maxlength="80" autocomplete="off" />
+      </div>
+      <div class="rename-actions">
+        <button id="cancelRenameBtn" class="secondary-btn" type="button">Cancelar</button>
+        <button id="confirmRenameBtn" class="primary-btn" type="button">Salvar nome</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="aboutModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <div class="modal-card about-card">
+      <div class="modal-head about-head">
+        <div>
+          <div class="about-title-row">
+            <h2 id="aboutTitle">SafeTabs</h2>
+            <span id="aboutVersion" class="version-pill">v1.0</span>
+          </div>
+          <p class="about-author">Criado por <strong>Rafael Belegante</strong></p>
+        </div>
+        <button id="closeAboutBtn" class="icon-btn" type="button" aria-label="Fechar">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="about-body">
+        <p class="about-summary">O SafeTabs salva e organiza grupos de abas da janela atual, permite reabrir itens individualmente ou em conjunto e facilita a transferência entre computadores por exportação e importação.</p>
+
+        <button id="projectLinkBtn" class="about-link-card" type="button">
+          <span class="about-link-icon">
+            <svg viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-8 8"/><path d="M18 13v6H5V6h6"/></svg>
+          </span>
+          <span class="about-link-copy">
+            <strong>Verificar atualizações</strong>
+            <small>Confira se existe uma versão mais recente do SafeTabs no GitHub.</small>
+          </span>
+          <svg class="about-link-arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+
+        <button id="profileLinkBtn" class="about-link-card" type="button">
+          <span class="about-link-icon accent">
+            <svg viewBox="0 0 24 24"><path d="M4 6h6l2 2h8v10H4z"/><path d="M8 12h8M8 15h5"/></svg>
+          </span>
+          <span class="about-link-copy">
+            <strong>Mais projetos</strong>
+            <small>Veja outros projetos e repositórios de Rafael Belegante no GitHub.</small>
+          </span>
+          <svg class="about-link-arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
