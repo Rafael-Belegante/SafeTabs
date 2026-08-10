@@ -224,7 +224,6 @@ svg {
   transition: .15s ease;
 }
 .save-btn:hover:not(:disabled) { background: #ffad62; transform: translateY(-1px); }
-.save-hint { grid-column: 1 / -1; font-size: 12px; line-height: 1.35; color: rgba(255, 255, 255, .88); }
 
 .content {
   min-height: 0;

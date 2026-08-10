@@ -2,8 +2,8 @@ const STORAGE_KEY = 'safetabs.sessions.v2';
 const THEME_KEY = 'safetabs.theme';
 const LEGACY_STORAGE_KEY = 'abacofre.sessions.v1';
 const LEGACY_THEME_KEY = 'abacofre.theme';
-const PROJECT_URL = 'https://github.com/Rafael-Belegante/SafeTabs';
-const PROFILE_URL = 'https://github.com/Rafael-Belegante/Hub-de-Projetos';
+const PROJECT_URL = 'https://github.com/search?q=%22SafeTabs%22+%22Rafael+Belegante%22&type=repositories';
+const PROFILE_URL = 'https://github.com/search?q=%22Rafael+Belegante%22&type=users';
 
 const state = {
   sessions: [],
@@ -32,7 +32,7 @@ const ICONS = {
 
 function initElements() {
   [
-    'sessionName', 'saveBtn', 'saveHint', 'themeBtn', 'themeIcon', 'aboutBtn', 'sessionCount', 'tabCount',
+    'sessionName', 'saveBtn', 'themeBtn', 'themeIcon', 'aboutBtn', 'sessionCount', 'tabCount',
     'selectedCount', 'searchInput', 'selectAllBtn', 'sessionsList', 'emptyState',
     'noResults', 'importBtn', 'exportBtn', 'deleteSelectedBtn', 'fileInput',
     'importModal', 'closeImportBtn', 'importPreview', 'importSelectAll', 'importSelectNone',
@@ -194,27 +194,10 @@ async function persist() {
   await chrome.storage.local.set({ [STORAGE_KEY]: state.sessions });
 }
 
-function isExcluded(url) {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
-    const matches = (domain) => host === domain || host.endsWith(`.${domain}`);
-
-    if (matches('drive.google.com')) return true;
-    if (matches('chatgpt.com') || matches('chat.openai.com')) return true;
-    if (matches('grok.com')) return true;
-    if (matches('gemini.google.com')) return true;
-    if ((host === 'x.com' || host === 'twitter.com') && /^\/i\/grok(?:\/|$)/i.test(parsed.pathname)) return true;
-    return false;
-  } catch {
-    return true;
-  }
-}
-
 function isSafeWebUrl(url) {
   try {
     const parsed = new URL(url);
-    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && !isExcluded(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
   } catch {
     return false;
   }
@@ -235,16 +218,11 @@ async function saveCurrentWindow() {
   try {
     const tabs = await chrome.tabs.query({ currentWindow: true });
     const valid = [];
-    let excluded = 0;
     let unsupported = 0;
 
     for (const tab of tabs) {
       if (!tab.url) {
         unsupported++;
-        continue;
-      }
-      if (isExcluded(tab.url)) {
-        excluded++;
         continue;
       }
       if (!isSafeWebUrl(tab.url)) {
@@ -281,10 +259,9 @@ async function saveCurrentWindow() {
     state.expanded.add(session.id);
     render();
 
-    const ignored = [];
-    if (excluded) ignored.push(`${excluded} excluída${excluded === 1 ? '' : 's'} pelo filtro`);
-    if (unsupported) ignored.push(`${unsupported} não compatível${unsupported === 1 ? '' : 'is'}`);
-    const suffix = ignored.length ? ` • ${ignored.join(' • ')}` : '';
+    const suffix = unsupported
+      ? ` • ${unsupported} não compatível${unsupported === 1 ? '' : 'is'}`
+      : '';
     toast(`${valid.length} aba${valid.length === 1 ? '' : 's'} salva${valid.length === 1 ? '' : 's'}${suffix}.`, 'success');
   } catch (error) {
     console.error(error);
