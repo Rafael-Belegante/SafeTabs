@@ -2,8 +2,8 @@ const STORAGE_KEY = 'safetabs.sessions.v2';
 const THEME_KEY = 'safetabs.theme';
 const LEGACY_STORAGE_KEY = 'abacofre.sessions.v1';
 const LEGACY_THEME_KEY = 'abacofre.theme';
-const PROJECT_URL = 'https://github.com/search?q=%22SafeTabs%22+%22Rafael+Belegante%22&type=repositories';
-const PROFILE_URL = 'https://github.com/search?q=%22Rafael+Belegante%22&type=users';
+const PROJECT_URL = 'https://github.com/Rafael-Belegante/SafeTabs';
+const PROFILE_URL = 'https://github.com/Rafael-Belegante/Hub-de-Projetos';
 
 const state = {
   sessions: [],
