@@ -54,3 +54,7 @@ As sessões ficam apenas no perfil local do navegador. O SafeTabs não tem servi
 ## Compatibilidade
 
 Chrome e Edge com suporte a Manifest V3.
+
+## Licença
+
+MIT. Veja [LICENSE](LICENSE).
