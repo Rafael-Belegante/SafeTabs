@@ -90,6 +90,55 @@
     </footer>
   </main>
 
+
+  <div id="openSessionModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="openSessionModalTitle">
+    <div class="modal-card open-session-card">
+      <div class="modal-head open-session-head">
+        <div>
+          <h2 id="openSessionModalTitle">Onde deseja abrir?</h2>
+          <p>Escolha o destino para todas as abas de <strong id="openSessionTitle"></strong>.</p>
+        </div>
+        <button id="closeOpenSessionBtn" class="icon-btn" type="button" aria-label="Cancelar e fechar">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="open-session-options">
+        <button id="openCurrentWindowBtn" class="open-destination-btn" type="button">
+          <span class="open-destination-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M4 9h16M8 7h.01M11 7h.01"/></svg>
+          </span>
+          <span class="open-destination-copy">
+            <strong>Janela atual</strong>
+            <small>Adiciona as abas à janela que você está usando.</small>
+          </span>
+          <svg class="open-destination-arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+
+        <button id="openNewWindowBtn" class="open-destination-btn" type="button">
+          <span class="open-destination-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 5h12v11H4z"/><path d="M8 19h12V8"/><path d="M4 9h12"/></svg>
+          </span>
+          <span class="open-destination-copy">
+            <strong>Nova janela</strong>
+            <small>Abre a sessão separada em uma nova janela normal.</small>
+          </span>
+          <svg class="open-destination-arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+
+        <button id="openIncognitoWindowBtn" class="open-destination-btn" type="button">
+          <span class="open-destination-icon incognito">
+            <svg viewBox="0 0 24 24"><path d="M5 11h14l-2-5H7z"/><circle cx="8" cy="15" r="3"/><circle cx="16" cy="15" r="3"/><path d="M11 15h2"/></svg>
+          </span>
+          <span class="open-destination-copy">
+            <strong>Nova janela anônima</strong>
+            <small>Requer que o SafeTabs tenha permissão para funcionar no modo anônimo.</small>
+          </span>
+          <svg class="open-destination-arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="importModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="importTitle">
     <div class="modal-card">
       <div class="modal-head">

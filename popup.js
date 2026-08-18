@@ -13,6 +13,7 @@ const state = {
   importSelected: new Set(),
   pendingDelete: null,
   renameSessionId: null,
+  pendingOpenSessionId: null,
   query: ''
 };
 
@@ -39,7 +40,8 @@ function initElements() {
     'importSelectionCount', 'confirmImportBtn', 'confirmModal', 'confirmTitle', 'confirmText',
     'cancelConfirmBtn', 'confirmDeleteBtn', 'renameModal', 'renameInput', 'closeRenameBtn',
     'cancelRenameBtn', 'confirmRenameBtn', 'aboutModal', 'closeAboutBtn', 'aboutVersion',
-    'projectLinkBtn', 'profileLinkBtn', 'toast'
+    'projectLinkBtn', 'profileLinkBtn', 'openSessionModal', 'closeOpenSessionBtn', 'openSessionTitle',
+    'openCurrentWindowBtn', 'openNewWindowBtn', 'openIncognitoWindowBtn', 'toast'
   ].forEach((id) => { els[id] = $(id); });
 }
 
@@ -67,6 +69,14 @@ function bindEvents() {
   els.fileInput.addEventListener('change', handleImportFile);
   els.themeBtn.addEventListener('click', toggleTheme);
   els.aboutBtn.addEventListener('click', openAboutModal);
+
+  els.closeOpenSessionBtn.addEventListener('click', closeOpenSessionModal);
+  els.openSessionModal.addEventListener('click', (event) => {
+    if (event.target === els.openSessionModal) closeOpenSessionModal();
+  });
+  els.openCurrentWindowBtn.addEventListener('click', () => openPendingSession('current'));
+  els.openNewWindowBtn.addEventListener('click', () => openPendingSession('new'));
+  els.openIncognitoWindowBtn.addEventListener('click', () => openPendingSession('incognito'));
 
   els.closeImportBtn.addEventListener('click', closeImportModal);
   els.importModal.addEventListener('click', (event) => {
@@ -111,6 +121,7 @@ function bindEvents() {
       closeConfirmModal();
       closeRenameModal();
       closeAboutModal();
+      closeOpenSessionModal();
     }
   });
 }
@@ -361,7 +372,7 @@ function buildSessionCard(session) {
   const actions = document.createElement('div');
   actions.className = 'session-actions';
 
-  const openAll = makeButton('mini-btn', `${ICONS.all}<span>Abrir todas</span>`, 'Abrir esta sessão em uma nova janela');
+  const openAll = makeButton('mini-btn', `${ICONS.all}<span>Abrir todas</span>`, 'Escolher onde abrir todas as abas desta sessão');
   openAll.addEventListener('click', () => openSession(session));
 
   const rename = makeButton('icon-btn', ICONS.edit, 'Renomear esta sessão');
@@ -522,20 +533,106 @@ async function openTab(url) {
   }
 }
 
-async function openSession(session) {
+function openSession(session) {
+  const validSession = state.sessions.find((item) => item.id === session?.id);
+  if (!validSession) return;
+
+  const urls = validSession.tabs.map((tab) => tab.url).filter(isSafeWebUrl);
+  if (!urls.length) {
+    toast('Esta sessão não possui URLs válidas para abrir.', 'error');
+    return;
+  }
+
+  state.pendingOpenSessionId = validSession.id;
+  els.openSessionTitle.textContent = validSession.name;
+  els.openSessionModal.classList.remove('hidden');
+}
+
+function closeOpenSessionModal() {
+  els.openSessionModal.classList.add('hidden');
+  state.pendingOpenSessionId = null;
+  els.openSessionTitle.textContent = '';
+}
+
+async function openPendingSession(destination) {
+  const session = state.sessions.find((item) => item.id === state.pendingOpenSessionId);
+  if (!session) {
+    closeOpenSessionModal();
+    return;
+  }
+
   const urls = session.tabs.map((tab) => tab.url).filter(isSafeWebUrl);
-  if (!urls.length) return;
+  if (!urls.length) {
+    closeOpenSessionModal();
+    toast('Esta sessão não possui URLs válidas para abrir.', 'error');
+    return;
+  }
+
+  const buttons = [els.openCurrentWindowBtn, els.openNewWindowBtn, els.openIncognitoWindowBtn];
+  buttons.forEach((button) => { button.disabled = true; });
+
   try {
-    await chrome.windows.create({ url: urls, focused: true });
+    if (destination === 'current') {
+      const currentWindow = await chrome.windows.getCurrent();
+      if (!currentWindow?.id) throw new Error('Janela atual não encontrada');
+
+      for (const url of urls) {
+        await chrome.tabs.create({ windowId: currentWindow.id, url, active: false });
+      }
+
+      closeOpenSessionModal();
+      toast(`${urls.length} aba${urls.length === 1 ? '' : 's'} aberta${urls.length === 1 ? '' : 's'} na janela atual.`, 'success');
+      return;
+    }
+
+    if (destination === 'new') {
+      await chrome.windows.create({ url: urls, focused: true });
+      closeOpenSessionModal();
+      return;
+    }
+
+    if (destination === 'incognito') {
+      const allowed = await isIncognitoAllowed();
+      if (!allowed) {
+        toast('Ative “Permitir no modo anônimo” nas configurações da extensão para usar esta opção.', 'error');
+        return;
+      }
+
+      await chrome.windows.create({ url: urls, focused: true, incognito: true });
+      closeOpenSessionModal();
+      return;
+    }
+
+    throw new Error(`Destino de abertura desconhecido: ${destination}`);
   } catch (error) {
     console.error(error);
-    try {
-      for (const url of urls) await chrome.tabs.create({ url, active: false });
-    } catch (fallbackError) {
-      console.error(fallbackError);
-      toast('Não foi possível abrir todas as abas.', 'error');
-    }
+    const message = destination === 'incognito'
+      ? 'Não foi possível abrir a sessão em uma janela anônima.'
+      : destination === 'current'
+        ? 'Não foi possível abrir todas as abas na janela atual.'
+        : 'Não foi possível abrir a sessão em uma nova janela.';
+    toast(message, 'error');
+  } finally {
+    buttons.forEach((button) => { button.disabled = false; });
   }
+}
+
+function isIncognitoAllowed() {
+  return new Promise((resolve) => {
+    if (!chrome.extension?.isAllowedIncognitoAccess) {
+      resolve(true);
+      return;
+    }
+
+    chrome.extension.isAllowedIncognitoAccess((allowed) => {
+      if (chrome.runtime.lastError) {
+        console.warn(chrome.runtime.lastError.message);
+        resolve(false);
+        return;
+      }
+      resolve(Boolean(allowed));
+    });
+  });
 }
 
 function exportSelected() {
